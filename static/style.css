@@ -1,0 +1,67 @@
+.todolist{
+    background-color: ivory;
+    width: 800px;
+    height: 600px;
+}
+.todoinput{
+    display:flex;
+    width: 600px;
+    height: 50px;
+    margin:auto;
+}
+.todolistone{
+    margin:auto;
+    width: 600px;
+    height: 50px;
+}
+.card-body{
+    width: 500px;
+}
+.donelistone{
+    display: flex;
+    margin: 5px auto 5px auto;
+    width: 600px;
+    height: 50px;
+}
+.donelistone.card-body{
+    width: 500px;
+
+}
+#done{
+    text-decoration: line-through;
+}
+.inputbox{
+    width: 530px;
+}
+.newtodo{
+    margin:auto;
+    border:1px gray;
+    border-radius: 5px;
+    display: flex;
+    width: 600px;
+    height: 50px;
+}
+.newtodo:hover{
+    border: 1px solid black;
+}
+.newbtn{
+    width: 30px;
+    height: 30px;
+    margin: auto 20px auto 20px;
+    display: flex;
+
+}
+.newp{
+    font-size: 28px;
+}
+.todolistone{
+    display: flex;
+    margin: 5px auto 5px auto;
+}
+.done{
+    width: 530px;
+    text-decoration: line-through
+}
+.datepick{
+    text-align: center;
+}
