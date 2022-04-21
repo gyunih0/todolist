@@ -1,9 +1,9 @@
-<!--더 보기 기능 만들기-->
-<!--더 보기 안에는 comment 창, tag input, 완료 필요함-->
-<!--더 보기를 다시 누루면 창이 닫히고 저장, 완료 버튼을 누루면 tag 데이터를 post해주기-->
-<!--더 보기 버튼 옆에 삭제 버튼 -->
+<!--완료 버튼을 누루면 tag 데이터를 post해주기-->
 <!--percentage 구현 필요-->
 <!--선택자 이름 변경 필요-->
+<!--당일 todo만 나오기 때문에 지나간 todo에 대한 처리 필요 -->
+<!--할 일 삭제하기 버튼 추가-->
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -56,20 +56,47 @@
               let todo = rows[i]['todo']
               let num = rows[i]['num']
               let done = rows[i]['done']
+              let tag = rows[i]['tag']
+              let comment = rows[i]['comment']
+
+              if(tag == undefined){
+                tag = ''
+              }
+              if(comment == undefined){
+                comment = ''
+              }
 
               let temp_html = ``
               if (done == 0) {
-                temp_html = `<div class="todolistone">
-                            <div class="card">
-                              <div class="card-body">
-                                ${todo}
+                temp_html = `<div class="onewrapper" id="todolist${num}">
+                              <div class="todolistone" >
+                                <div class="card" id="todo${num}">
+                                  <div class="card-body">
+                                    ${todo}
+                                  </div>
+                                </div>
+                                <button onclick="show_comment(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 더보기</button>
+                                <button onclick="done_todo(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 완료하기</button>
                               </div>
-                            </div>
-                            <button onclick="done_todo(${num})" type="button" class="btn btn-outline-primary">더보기</button>
-                          </div>`
+                              <div class="mypost" id="commentbox${num}">
+                                  <div class="form-floating">
+                                  <textarea class="form-control" placeholder="Leave a comment here" id="comment${num}"
+                                            style="height: 100px">${comment}</textarea>
+                                      <label for="floatingTextarea2">comment</label>
+                                 </div>
+
+                                  <div class="form-floating mb-3" id="tagbox">
+                                      <textarea type="text" class="form-control" id="tag${num}" placeholder="url">${tag}</textarea>
+                                      <label for="floatingInput">tag</label>
+                                  </div>
+
+                                  <button onclick="save_comment(${num})" type="button" class="btn btn-dark">${num}저장</button>
+                                  <button onclick="close_comment(${num})" type="button" class="btn btn-dark">${num}닫기</button>
+                              </div>
+                            </div>`
               } else {
-                temp_html = `<div class="donelistone">
-                            <div class="card">
+                temp_html = `<div class="donelistone" id="donelist${num}">
+                            <div class="card" id="todo${num}">
                               <div class="card-body" id="done">
                                 ${todo}
                               </div>
@@ -78,7 +105,7 @@
                           </div>`
               }
               $('#onelist').append(temp_html)
-
+              $('#commentbox'+ num).hide()
             }
           }
             let temp_html = `<button id="newbutton" class="newtodo" onclick="makenewinput()">
@@ -90,14 +117,41 @@
                             <p class="newp">NEW</p>
                           </button>`
             $('#onelist').append(temp_html)
+
           }
 
       })
 
     }
-    function detail(num){
 
+    function save_comment(num){
+      let comment = $('#comment'+num).val()
+      let tag = $('#tag'+num).val()
+      console.log(comment, tag, '#comment'+num,'#tag'+num)
+      $.ajax({
+        type: "POST",
+        url: "/todo/comment",
+        data: { num_give: num,
+                comment_give: comment,
+                tag_give: tag
+              },
 
+        success: function (response) {
+          alert(response["msg"])
+          window.location.reload()
+        }
+      });
+
+    }
+
+    function show_comment(num){
+      console.log('show '+num)
+      $('#commentbox'+num).show()
+    }
+
+    function close_comment(num){
+      console.log('hide '+ num)
+      $('#commentbox'+num).hide()
     }
     function done_todo(num) {
       $.ajax({
@@ -181,9 +235,7 @@
         }
       });
     }
-    function fix_date(){
 
-    }
   </script>
   <title>Toy</title>
 </head>
@@ -193,6 +245,7 @@
     <div class="date">
       <h2></h2>
     </div>
+    <button> 오늘 할일 완료 </button>
     <div id="onelist">
 
       <!--      <button id="newbutton" class="newtodo" onclick="makenewinput()">-->
@@ -211,6 +264,8 @@
         <button onclick="savelist()" type="button" class="btn btn-light">Light</button>
       </div> -->
     </div>
+
+
   </div>
 </body>
 

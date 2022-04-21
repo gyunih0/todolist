@@ -37,7 +37,9 @@ def todo_post():
         'date': date_receive,
         'num': count,
         'todo': todo_receive,
-        'done': 0
+        'done': 0,
+        'comment': '',
+        'tag': ''
     }
     db.todo.insert_one(doc)
 
@@ -45,10 +47,21 @@ def todo_post():
 
 
 @app.route("/todo/done", methods=["POST"])
+# 당일 전체 할일 갯수 중에 완료된거 갯수 업데이트 해서 1~5단계로 percentage 저장/업데이트 해야됨, ex){type: percentage, percentage: 1~5}
 def todo_done():
     num_receive = request.form['num_give']
     db.todo.update_one({'num': int(num_receive)}, {'$set': {'done': 1}})
     return jsonify({'msg': 'done 완료!'})
+
+
+@app.route("/todo/comment", methods=["POST"])
+def todo_comment():
+    num_receive = request.form['num_give']
+    comment_receive = request.form['comment_give']
+    tag_receive = request.form['tag_give']
+
+    db.todo.update_one({'num': int(num_receive)}, {'$set': {'comment': comment_receive, 'tag': tag_receive}})
+    return jsonify({'msg': 'comment, tag 완료!'})
 
 
 @app.route("/todo", methods=["GET"])
