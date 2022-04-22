@@ -50,7 +50,44 @@ def todo_post():
 # 당일 전체 할일 갯수 중에 완료된거 갯수 업데이트 해서 1~5단계로 percentage 저장/업데이트 해야됨, ex){type: percentage, percentage: 1~5}
 def todo_done():
     num_receive = request.form['num_give']
+    date_receive = request.form['date_give']
     db.todo.update_one({'num': int(num_receive)}, {'$set': {'done': 1}})
+
+    todo_list = list(db.todo.find({'date': date_receive}, {'_id': False}))
+    done_count = 0
+    percent_level = 0
+    total = len(todo_list)
+    for todo in todo_list:
+        if todo['done'] == 1:
+            done_count += 1
+    percentage = done_count / total
+
+    if percentage == 0:
+        percent_level = 0
+    elif percentage <= 0.25:
+        percent_level = 1
+    elif percentage <= 0.5:
+        percent_level = 2
+    elif percentage <= 0.75:
+        percent_level = 3
+    elif percentage < 1:
+        percent_level = 4
+    else:
+        percent_level = 5
+
+    print(done_count, percentage, 'percent_level = {}'.format(percent_level))
+
+    done_percentage = list(db.todo_percent.find({'date': date_receive}, {'_id': False}))
+    if len(done_percentage) == 0:
+        print('No date')
+        doc = {
+            'date': date_receive,
+            'percent_level': percent_level
+        }
+        db.todo_percent.insert_one(doc)
+    else:
+        db.todo_percent.update_one({'date': date_receive}, {'$set': {'percent_level': percent_level}})
+
     return jsonify({'msg': 'done 완료!'})
 
 

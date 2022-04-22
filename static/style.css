@@ -17,16 +17,17 @@
 .card-body{
     width: 400px;
 }
+
 .donelistone{
     display: flex;
     margin: 5px auto 5px auto;
     width: 600px;
     height: 50px;
 }
-.donelistone.card-body{
-    width: 500px;
+/*.donelistone.card-body{*/
+/*    width: 500px;*/
 
-}
+/*}*/
 #done{
     text-decoration: line-through;
 }
@@ -61,6 +62,9 @@
 .todolistone > button{
     margin-left: 10px;
 }
+.donelistone > button{
+    margin-left: 10px;
+}
 .done{
     width: 530px;
     text-decoration: line-through
@@ -89,4 +93,8 @@
 
 .mypost > button {
     margin-top: 15px;
+}
+
+.mypost > #comment_close_btn{
+    margin-left: 220px;
 }
