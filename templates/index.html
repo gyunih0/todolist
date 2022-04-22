@@ -1,0 +1,288 @@
+<!--버튼 들에 대한 간단한 설명-->
+<!--삭제 버튼은 해당 todo를 완전 삭제하는 버튼-->
+<!--더보기 버튼은 commentbox를 여는 버튼-->
+<!--comment box 안에 있는 버튼들은-->
+<!--닫기 버튼은 comment box를 닫는 버튼-->
+<!--저장 버튼은 comment, tag값 저장하는 버튼-->
+<!--완료 버튼은 해당 todo를 완료처리하는 버튼-->
+<!--완료 버튼을 누룰 때 github table에 잔디가 심어지면됨-->
+
+<!--수정 할 내용들-->
+<!--완료 버튼을 누루면 tag 데이터를 post해주기-->
+<!--percentage 구현 필요(완료)-->
+<!--선택자 이름 변경 필요-->
+<!--당일 todo만 나오기 때문에 지나간 todo에 대한 처리 필요 -->
+<!--할 일 삭제하기 버튼 추가(완료)-->
+<!--done_todo function 수정 & show_list 에서 else 부분 수정 -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <link rel="stylesheet" href="./static/style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+  <style></style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+          integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+          integrity="sha512-uto9mlQzrs59VwILcLiRYeLKPPbS/bT71da/OEBYEwcdNUk8jYIy+D176RYoop1Da+f9mvkYrmj5MCLZWEtQuA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css"
+        integrity="sha512-aOG0c6nPNzGk+5zjwyJaoRUgCdOrfSDhmMID2u4+OIslr0GjpLKo7Xm0Ao3xmpM4T8AmIouRkqwj1nrdVsLKEQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script>
+    let todayDate = set_date()
+
+    $(document).ready(function () {
+      show_list();
+    });
+    function set_date() {
+      let today = new Date();
+      let tdyear = today.getFullYear(); // 년도
+      let tdmonth = ('0' + (today.getMonth() + 1)).slice(-2);  // 월
+      let tddate = today.getDate();  // 날짜
+      let date = tdmonth + '/' +tddate + '/' + tdyear
+      return date
+    }
+
+    function show_list() {
+      let date = todayDate
+      let date_html = `<h2 id="today_date">${date}</h2>`
+      $('.date').append(date_html)
+      $.ajax({
+        type: "GET",
+        url: "/todo",
+        data: {},
+        success: function (response) {
+          let rows = response['todos']
+          for (let i = 0; i < rows.length; i++){
+            console.log(date + 'vs' + rows[i]['date'])
+            if (date == rows[i]['date']) { //오늘 날짜 아닌것은 필터링
+              let todo = rows[i]['todo']
+              let num = rows[i]['num']
+              let done = rows[i]['done']
+              let tag = rows[i]['tag']
+              let comment = rows[i]['comment']
+
+              if(tag == undefined){
+                tag = ''
+              }
+              if(comment == undefined){
+                comment = ''
+              }
+
+              let temp_html = ``
+              if (done == 0) {
+                temp_html = `<div class="onewrapper" id="todolist${num}">
+
+                              <div class="todolistone" >
+
+                                <div class="card" id="todo${num}">
+                                  <div class="card-body">
+                                    ${todo}
+                                  </div>
+                                </div>
+                                <button onclick="show_comment(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 더보기</button>
+                                <button onclick="delete_one(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 삭제</button>
+                              </div>
+                              <div class="mypost" id="commentbox${num}">
+                                  <div class="form-floating">
+                                  <textarea class="form-control" placeholder="Leave a comment here" id="comment${num}"
+                                            style="height: 100px">${comment}</textarea>
+                                      <label for="floatingTextarea2">comment</label>
+                                 </div>
+
+                                  <div class="form-floating mb-3" id="tagbox">
+                                      <textarea type="text" class="form-control" id="tag${num}" placeholder="url">${tag}</textarea>
+                                      <label for="floatingInput">tag</label>
+                                  </div>
+
+                                  <button onclick="save_comment(${num})" type="button" class="btn btn-dark">${num}저장</button>
+                                  <button onclick="done_todo(${num})" type="button" class="btn btn-dark">${num}완료</button>
+                                  <button id="comment_close_btn" onclick="close_comment(${num})" type="button" class="btn btn-dark">${num}닫기</button>
+                              </div>
+                            </div>`
+              } else {
+                temp_html = `<div class="onewrapper" id="todolist${num}">
+                              <div class="donelistone" id="donelist${num}">
+                                <div class="card" id="todo${num}">
+                                  <div class="card-body" id="done">
+                                    ${todo}
+                                  </div>
+                                </div>
+                                <button onclick="show_comment(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 더보기</button>
+                                <button onclick="delete_one(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 삭제</button>
+                              </div>
+                              <div class="mypost" id="commentbox${num}">
+                                  <div class="form-floating">
+                                  <textarea class="form-control" placeholder="Leave a comment here" id="comment${num}"
+                                            style="height: 100px">${comment}</textarea>
+                                      <label for="floatingTextarea2">comment</label>
+                                 </div>
+
+                                  <div class="form-floating mb-3" id="tagbox">
+                                      <textarea type="text" class="form-control" id="tag${num}" placeholder="url">${tag}</textarea>
+                                      <label for="floatingInput">tag</label>
+                                  </div>
+
+                                  <button onclick="save_comment(${num})" type="button" class="btn btn-dark">${num}저장</button>
+                                  <button onclick="done_todo(${num})" type="button" class="btn btn-dark">${num}완료</button>
+                                  <button id="comment_close_btn" onclick="close_comment(${num})" type="button" class="btn btn-dark">${num}닫기</button>
+                              </div>
+
+                            </div>`
+              }
+              $('#onelist').append(temp_html)
+              $('#commentbox'+ num).hide()
+            }
+          }
+            let temp_html = `<button id="newbutton" class="newtodo" onclick="makenewinput()">
+                            <svg class="newbtn" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                              class="bi bi-plus-circle-dotted" viewBox="0 0 16 16">
+                              <path
+                                d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z" />
+                            </svg>
+                            <p class="newp">NEW</p>
+                          </button>`
+            $('#onelist').append(temp_html)
+
+          }
+
+      })
+
+    }
+
+    function save_comment(num){
+      let comment = $('#comment'+num).val()
+      let tag = $('#tag'+num).val()
+      console.log(comment, tag, '#comment'+num,'#tag'+num)
+      $.ajax({
+        type: "POST",
+        url: "/todo/comment",
+        data: { num_give: num,
+                comment_give: comment,
+                tag_give: tag
+              },
+
+        success: function (response) {
+          alert(response["msg"])
+          window.location.reload()
+        }
+      });
+
+    }
+
+    function show_comment(num){
+      console.log('show '+num)
+      $('#commentbox'+num).show()
+    }
+
+    function close_comment(num){
+      console.log('hide '+ num)
+      $('#commentbox'+num).hide()
+    }
+    function done_todo(num) {
+      $.ajax({
+        type: "POST",
+        url: "/todo/done",
+        data: { num_give: num, date_give: todayDate },
+        success: function (response) {
+          alert(response["msg"])
+          window.location.reload()
+        }
+      });
+    }
+    function enterkey() {
+      if (window.event.keyCode == 13) {
+        // 엔터키가 눌렸을 때
+        savelist()
+      }
+    }
+
+    function makenewinput() {
+      let temp_html = ``
+      temp_html = `<div id="listbox" class="todoinput">
+                    <input id="todoinput" onkeyup="enterkey()" class="inputbox" type="text" placeholder="할 일을 입력해주세요."
+                      aria-label=".form-control-lg example" />
+                    <button onclick="savelist()" type="button" class="btn btn-light">등록</button>
+                  </div>
+                  `
+      //기존버튼 제거
+      $('#newbutton').remove()
+      // input창 + 새로운 버튼
+      $('#onelist').append(temp_html)
+    }
+
+    function savelist() {
+      let date = todayDate
+      let todo = $('#todoinput').val()
+
+      $.ajax({
+        type: "POST",
+        url: "/todo",
+        data: { todo_give: todo, date_give: date },
+        success: function (response) {
+          alert(response["msg"])
+           window.location.reload()
+          // num = response["num"]
+        }
+      });
+
+
+      // let temp_html = `<div class="todolistone">
+      //                     <div class="card">
+      //                       <div class="card-body">
+      //                         ${todo}
+      //                       </div>
+      //                     </div>
+      //                     <button onclick="done_todo(${num})" type="button" class="btn btn-outline-primary">완료</button>
+      //                   </div>
+      //
+      //                  <!-- newtodo 추가하는 button-->
+      //                   <button id="newbutton" class="newtodo" onclick="makenewinput()">
+      //                     <svg class="newbtn" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+      //                       class="bi bi-plus-circle-dotted" viewBox="0 0 16 16">
+      //                       <path
+      //                         d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z" />
+      //                     </svg>
+      //                     <p class="newp">NEW</p>
+      //                   </button>`
+
+
+      // $('#listbox').remove()
+      // $('#onelist').append(temp_html)
+    }
+    function delete_one(num){
+      $.ajax({
+        type: "POST",
+        url: "/todo/delete",
+        data: { num_give: num },
+        success: function (response) {
+          alert(response["msg"])
+           window.location.reload()
+        }
+      });
+    }
+
+  </script>
+  <title>Toy</title>
+</head>
+
+<body>
+  <div class="todolist">
+    <div class="date">
+      <h2></h2>
+    </div>
+    <div id="onelist"></div>
+
+  </div>
+</body>
+
+</html>
