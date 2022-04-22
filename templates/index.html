@@ -1,8 +1,20 @@
+<!--버튼 들에 대한 간단한 설명-->
+<!--삭제 버튼은 해당 todo를 완전 삭제하는 버튼-->
+<!--더보기 버튼은 commentbox를 여는 버튼-->
+<!--comment box 안에 있는 버튼들은-->
+<!--닫기 버튼은 comment box를 닫는 버튼-->
+<!--저장 버튼은 comment, tag값 저장하는 버튼-->
+<!--완료 버튼은 해당 todo를 완료처리하는 버튼-->
+<!--완료 버튼을 누룰 때 github table에 잔디가 심어지면됨-->
+
+<!--수정 할 내용들-->
 <!--완료 버튼을 누루면 tag 데이터를 post해주기-->
-<!--percentage 구현 필요-->
+<!--percentage 구현 필요(완료)-->
 <!--선택자 이름 변경 필요-->
 <!--당일 todo만 나오기 때문에 지나간 todo에 대한 처리 필요 -->
-<!--할 일 삭제하기 버튼 추가-->
+<!--할 일 삭제하기 버튼 추가(완료)-->
+<!--done_todo function 수정 & show_list 에서 else 부분 수정 -->
+
 
 
 <!DOCTYPE html>
@@ -69,14 +81,16 @@
               let temp_html = ``
               if (done == 0) {
                 temp_html = `<div class="onewrapper" id="todolist${num}">
+
                               <div class="todolistone" >
+
                                 <div class="card" id="todo${num}">
                                   <div class="card-body">
                                     ${todo}
                                   </div>
                                 </div>
                                 <button onclick="show_comment(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 더보기</button>
-                                <button onclick="done_todo(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 완료하기</button>
+                                <button onclick="delete_one(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 삭제</button>
                               </div>
                               <div class="mypost" id="commentbox${num}">
                                   <div class="form-floating">
@@ -91,18 +105,39 @@
                                   </div>
 
                                   <button onclick="save_comment(${num})" type="button" class="btn btn-dark">${num}저장</button>
-                                  <button onclick="close_comment(${num})" type="button" class="btn btn-dark">${num}닫기</button>
+                                  <button onclick="done_todo(${num})" type="button" class="btn btn-dark">${num}완료</button>
+                                  <button id="comment_close_btn" onclick="close_comment(${num})" type="button" class="btn btn-dark">${num}닫기</button>
                               </div>
                             </div>`
               } else {
-                temp_html = `<div class="donelistone" id="donelist${num}">
-                            <div class="card" id="todo${num}">
-                              <div class="card-body" id="done">
-                                ${todo}
+                temp_html = `<div class="onewrapper" id="todolist${num}">
+                              <div class="donelistone" id="donelist${num}">
+                                <div class="card" id="todo${num}">
+                                  <div class="card-body" id="done">
+                                    ${todo}
+                                  </div>
+                                </div>
+                                <button onclick="show_comment(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 더보기</button>
+                                <button onclick="delete_one(${num})" type="button" class="btn btn-outline-primary btn-sm">${num} 삭제</button>
                               </div>
-                            </div>
-                            <button onclick="delete_one(${num})" type="button" class="btn btn-outline-primary">삭제</button>
-                          </div>`
+                              <div class="mypost" id="commentbox${num}">
+                                  <div class="form-floating">
+                                  <textarea class="form-control" placeholder="Leave a comment here" id="comment${num}"
+                                            style="height: 100px">${comment}</textarea>
+                                      <label for="floatingTextarea2">comment</label>
+                                 </div>
+
+                                  <div class="form-floating mb-3" id="tagbox">
+                                      <textarea type="text" class="form-control" id="tag${num}" placeholder="url">${tag}</textarea>
+                                      <label for="floatingInput">tag</label>
+                                  </div>
+
+                                  <button onclick="save_comment(${num})" type="button" class="btn btn-dark">${num}저장</button>
+                                  <button onclick="done_todo(${num})" type="button" class="btn btn-dark">${num}완료</button>
+                                  <button id="comment_close_btn" onclick="close_comment(${num})" type="button" class="btn btn-dark">${num}닫기</button>
+                              </div>
+
+                            </div>`
               }
               $('#onelist').append(temp_html)
               $('#commentbox'+ num).hide()
@@ -157,7 +192,7 @@
       $.ajax({
         type: "POST",
         url: "/todo/done",
-        data: { num_give: num },
+        data: { num_give: num, date_give: todayDate },
         success: function (response) {
           alert(response["msg"])
           window.location.reload()
@@ -245,26 +280,7 @@
     <div class="date">
       <h2></h2>
     </div>
-    <button> 오늘 할일 완료 </button>
-    <div id="onelist">
-
-      <!--      <button id="newbutton" class="newtodo" onclick="makenewinput()">-->
-      <!--        <svg class="newbtn" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"-->
-      <!--          class="bi bi-plus-circle-dotted" viewBox="0 0 16 16">-->
-      <!--          <path-->
-      <!--            d="M8 0c-.176 0-.35.006-.523.017l.064.998a7.117 7.117 0 0 1 .918 0l.064-.998A8.113 8.113 0 0 0 8 0zM6.44.152c-.346.069-.684.16-1.012.27l.321.948c.287-.098.582-.177.884-.237L6.44.153zm4.132.271a7.946 7.946 0 0 0-1.011-.27l-.194.98c.302.06.597.14.884.237l.321-.947zm1.873.925a8 8 0 0 0-.906-.524l-.443.896c.275.136.54.29.793.459l.556-.831zM4.46.824c-.314.155-.616.33-.905.524l.556.83a7.07 7.07 0 0 1 .793-.458L4.46.824zM2.725 1.985c-.262.23-.51.478-.74.74l.752.66c.202-.23.418-.446.648-.648l-.66-.752zm11.29.74a8.058 8.058 0 0 0-.74-.74l-.66.752c.23.202.447.418.648.648l.752-.66zm1.161 1.735a7.98 7.98 0 0 0-.524-.905l-.83.556c.169.253.322.518.458.793l.896-.443zM1.348 3.555c-.194.289-.37.591-.524.906l.896.443c.136-.275.29-.54.459-.793l-.831-.556zM.423 5.428a7.945 7.945 0 0 0-.27 1.011l.98.194c.06-.302.14-.597.237-.884l-.947-.321zM15.848 6.44a7.943 7.943 0 0 0-.27-1.012l-.948.321c.098.287.177.582.237.884l.98-.194zM.017 7.477a8.113 8.113 0 0 0 0 1.046l.998-.064a7.117 7.117 0 0 1 0-.918l-.998-.064zM16 8a8.1 8.1 0 0 0-.017-.523l-.998.064a7.11 7.11 0 0 1 0 .918l.998.064A8.1 8.1 0 0 0 16 8zM.152 9.56c.069.346.16.684.27 1.012l.948-.321a6.944 6.944 0 0 1-.237-.884l-.98.194zm15.425 1.012c.112-.328.202-.666.27-1.011l-.98-.194c-.06.302-.14.597-.237.884l.947.321zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a6.999 6.999 0 0 1-.458-.793l-.896.443zm13.828.905c.194-.289.37-.591.524-.906l-.896-.443c-.136.275-.29.54-.459.793l.831.556zm-12.667.83c.23.262.478.51.74.74l.66-.752a7.047 7.047 0 0 1-.648-.648l-.752.66zm11.29.74c.262-.23.51-.478.74-.74l-.752-.66c-.201.23-.418.447-.648.648l.66.752zm-1.735 1.161c.314-.155.616-.33.905-.524l-.556-.83a7.07 7.07 0 0 1-.793.458l.443.896zm-7.985-.524c.289.194.591.37.906.524l.443-.896a6.998 6.998 0 0 1-.793-.459l-.556.831zm1.873.925c.328.112.666.202 1.011.27l.194-.98a6.953 6.953 0 0 1-.884-.237l-.321.947zm4.132.271a7.944 7.944 0 0 0 1.012-.27l-.321-.948a6.954 6.954 0 0 1-.884.237l.194.98zm-2.083.135a8.1 8.1 0 0 0 1.046 0l-.064-.998a7.11 7.11 0 0 1-.918 0l-.064.998zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z" />-->
-      <!--        </svg>-->
-      <!--        <p class="newp">NEW</p>-->
-      <!--      </button>-->
-
-
-      <!-- <div class="todoinput">
-        <input id="todoinput" class="form-control form-control-lg" type="text" placeholder=".form-control-lg"
-          aria-label=".form-control-lg example" />
-        <button onclick="savelist()" type="button" class="btn btn-light">Light</button>
-      </div> -->
-    </div>
-
+    <div id="onelist"></div>
 
   </div>
 </body>
