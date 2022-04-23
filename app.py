@@ -39,7 +39,7 @@ def todo_post():
         'todo': todo_receive,
         'done': 0,
         'comment': '',
-        'tag': ''
+        'tag': []
     }
     db.todo.insert_one(doc)
 
@@ -97,7 +97,19 @@ def todo_comment():
     comment_receive = request.form['comment_give']
     tag_receive = request.form['tag_give']
 
-    db.todo.update_one({'num': int(num_receive)}, {'$set': {'comment': comment_receive, 'tag': tag_receive}})
+    # split tags & append in tag_list
+    tag_words = tag_receive.replace('#', ',')
+    tag_list = tag_words.split(',')
+    del_index = []
+    for i in range(len(tag_list)):  # 공백 문자 제거
+        tag_list[i] = tag_list[i].strip()
+        if tag_list[i] == '':
+            del_index.append(i)
+    for i in del_index:  # 빈 tag 제거
+        del(tag_list[i])
+    print(tag_list)
+
+    db.todo.update_one({'num': int(num_receive)}, {'$set': {'comment': comment_receive, 'tag': tag_list}})
     return jsonify({'msg': 'comment, tag 완료!'})
 
 
