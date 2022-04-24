@@ -199,6 +199,7 @@
       $('#commentbox'+num).hide()
     }
     function done_todo(num) {
+      console.log("done_todo", num)
       $.ajax({
         type: "POST",
         url: "/todo/done",
