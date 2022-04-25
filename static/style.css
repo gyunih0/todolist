@@ -1,8 +1,14 @@
+
 .todolist{
     background-color: ivory;
     width: 800px;
     height: 600px;
 }
+.today-date{
+    display: flex;
+    justify-content: center;
+}
+
 .todoinput{
     display:flex;
     width: 600px;

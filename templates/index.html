@@ -15,7 +15,7 @@
 <!--완료 버튼을 누루면 tag 데이터를 post해주기(완료)-->
 <!--percentage 구현 필요(완료)-->
 <!--선택자 이름 변경 필요-->
-<!--당일 todo만 나오기 때문에 지나간 todo에 대한 처리 필요 -->
+<!--당일 todo만 나오기 때문에 지나간 todo에 대한 처리 필요 (완료) -->
 <!--할 일 삭제하기 버튼 추가(완료)-->
 <!--done_todo function 수정 & show_list 에서 else 부분 수정(완료)-->
 
@@ -47,19 +47,21 @@
     $(document).ready(function () {
       show_list();
     });
+
     function set_date() {
       let today = new Date();
       let tdyear = today.getFullYear(); // 년도
       let tdmonth = ('0' + (today.getMonth() + 1)).slice(-2);  // 월
       let tddate = today.getDate();  // 날짜
-      let date = tdmonth + '/' +tddate + '/' + tdyear
+      let date = tdmonth + '/' +tddate + '/' + tdyear  // MM/DD/YYYY
+
       return date
     }
 
     function show_list() {
-      let date = todayDate
-      let date_html = `<h2 id="today_date">${date}</h2>`
-      $('.date').append(date_html)
+      let date_html = `<h2 id="today_date">${todayDate}</h2>`
+      $('.today-date').append(date_html)
+
       $.ajax({
         type: "GET",
         url: "/todo",
@@ -67,8 +69,8 @@
         success: function (response) {
           let rows = response['todos']
           for (let i = 0; i < rows.length; i++){
-            console.log(date + 'vs' + rows[i]['date'])
-            if (date == rows[i]['date']) { //오늘 날짜 아닌것은 필터링
+            console.log(todayDate + 'vs' + rows[i]['date'])
+            if (todayDate == rows[i]['date']) { //오늘 날짜 아닌 것은 필터링
               let todo = rows[i]['todo']
               let num = rows[i]['num']
               let done = rows[i]['done']
@@ -186,8 +188,8 @@
           window.location.reload()
         }
       });
-
     }
+
 
     function show_comment(num){
       console.log('show '+num)
@@ -198,6 +200,8 @@
       console.log('hide '+ num)
       $('#commentbox'+num).hide()
     }
+
+
     function done_todo(num) {
       console.log("done_todo", num)
       $.ajax({
@@ -210,6 +214,7 @@
         }
       });
     }
+
     function enterkey() {
       if (window.event.keyCode == 13) {
         // 엔터키가 눌렸을 때
@@ -217,7 +222,8 @@
       }
     }
 
-    function makenewinput() {
+
+    function makenewinput() {  //inputbox
       let temp_html = ``
       temp_html = `<div id="listbox" class="todoinput">
                     <input id="todoinput" onkeyup="enterkey()" class="inputbox" type="text" placeholder="할 일을 입력해주세요."
@@ -265,8 +271,8 @@
 
 <body>
   <div class="todolist">
-    <div class="date">
-      <h2></h2>
+    <div class="today-date">
+
     </div>
     <div id="onelist"></div>
 

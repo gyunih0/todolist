@@ -1,3 +1,17 @@
+'''
+percentage level 중 0값을 설정 해줄 필요가 있나?
+>> 생성하고 아무것도 하지 않았다면? (최소 하나를 완료 해야 되는 방식)
+>> db.todo_percent 에 값이 저장 되지 않는다.
+
+tag저장 방식
+>> tag를 수정할 경우?
+>> 해당 데이터가 todo_tag에 있는지를 판별할 수 있는 지표 설정
+>> num로 찾을 거면 num가 중복이 되면 안됨
+>> 중복이 되지 않는 방법은?
+>> 다른 효율적인 지표는?
+
+'''
+
 from pymongo import MongoClient
 from flask import Flask, render_template, request, jsonify
 import certifi
@@ -10,11 +24,6 @@ app = Flask(__name__)
 client = MongoClient(
     'mongodb+srv://test:sparta@cluster0.7y6m3.mongodb.net/Cluster0?retryWrites=true&w=majority', tlsCAFile=ca)
 db = client.dbsparta
-
-# 오늘 날짜 아닌 데이터 삭제하기
-# 1. 오늘 잘짜 인가?
-# 2. tag 가 저장되어 있나?
-# 3. 완료가 되어있나?
 
 
 @app.route('/')
@@ -30,7 +39,8 @@ def todo_post():
     print(todo_receive, date_receive)
 
     todo_list = list(db.todo.find({}, {'_id': False}))
-
+    # 이 방식이 중복을 일으킴 (날짜가 지나면 db.todo에 있는 데이터들이 삭제 됨 -> 다음날이 되면 num가 1부터 다시 시작됨)
+    # 수정 필요
     num_list = []  # num 속성 중복 오류를 막기 위함
     for todo in todo_list:
         num_list.append(todo['num'])
@@ -112,12 +122,13 @@ def todo_done():
 
     done_percentage = list(db.todo_percent.find({'date': date_receive}, {'_id': False}))
     if len(done_percentage) == 0:
-        print('No date')
+
         doc = {
             'date': date_receive,
             'percent_level': percent_level
         }
         db.todo_percent.insert_one(doc)
+        print(doc, ' \n >> db.todo_percent')
     else:
         db.todo_percent.update_one({'date': date_receive}, {'$set': {'percent_level': percent_level}})
 
