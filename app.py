@@ -1,15 +1,10 @@
 '''
+
 percentage level 중 0값을 설정 해줄 필요가 있나?
 >> 생성하고 아무것도 하지 않았다면? (최소 하나를 완료 해야 되는 방식)
 >> db.todo_percent 에 값이 저장 되지 않는다.
 
-tag저장 방식
->> tag를 수정할 경우?
->> 해당 데이터가 todo_tag에 있는지를 판별할 수 있는 지표 설정
->> num로 찾을 거면 num가 중복이 되면 안됨
->> 중복이 되지 않는 방법은?
->> 다른 효율적인 지표는?
-
+num 중복 적용 (해결)
 '''
 
 from pymongo import MongoClient
@@ -36,32 +31,36 @@ def home():
 def todo_post():
     date_receive = request.form['date_give']
     todo_receive = request.form['todo_give']
-    print(todo_receive, date_receive)
 
+    tag_list = list(db.todo_tags.find({}, {'_id': False}))
     todo_list = list(db.todo.find({}, {'_id': False}))
-    # 이 방식이 중복을 일으킴 (날짜가 지나면 db.todo에 있는 데이터들이 삭제 됨 -> 다음날이 되면 num가 1부터 다시 시작됨)
-    # 수정 필요
+
+    # 1. db.todo_tags에서 num을 조회
+    # 2. db.todo에서 num을 조회
+    # 3. 둘 모두 해당하지 않는 num를 새로운 todo의 num로 지정한다.
     num_list = []  # num 속성 중복 오류를 막기 위함
+    for tag in tag_list:
+        num_list.append(tag['num'])
     for todo in todo_list:
         num_list.append(todo['num'])
 
-    count = len(todo_list) + 1
+    count = len(tag_list) + 1
     while count in num_list:
         count += 1
-
-    print(num_list, count)
+    print(num_list, count, 'todo#{} created'.format(count))
 
     doc = {
         'date': date_receive,
         'num': count,
         'todo': todo_receive,
-        'done': 0,
-        'comment': '',
-        'tag': []
+        'done': 0,  # default
+        'comment': '',  # default
+        'tag': []  # default
     }
     db.todo.insert_one(doc)
 
-    return jsonify({'msg': '등록완료', 'num': count})
+    print('<new todolist created>\nDate: {}, todo: {} Num: {} -> db.todo'.format(date_receive, todo_receive, count))
+    return jsonify({'msg': '등록 완료'})
 
 
 @app.route("/todo/done", methods=["POST"])
@@ -76,16 +75,18 @@ def todo_done():
     for todo in todo_list:
         # 테그 저장 부분
         if todo['tag']:  # todo에 tag가 저장되있다면
-
             if len(tag_list) != 0:
                 print("기존 tag 수정")
-                for tags in tag_list:  # 그 todo의 num가 todo_tags 에 있다면 tag 수정
 
+                for tags in tag_list:  # 그 todo의 num가 todo_tags 에 있다면 tag 수정
                     if todo['num'] == tags['num']:
+                        before = tags['tag']
+                        after = todo['tag']
+                        print('#{} tags updated\n {} -> {}'.format(tags['num'], before, after))
                         db.todo_tags.update_one({'num': todo['num']}, {'$set': {'tag': todo['tag']}})
-                        print(tags['num'], "updated")
+
             else:  # 신규 저장 이라면
-                print("신규 tag")
+                print("신규 tag 저장")
                 doc = {
                     'date': todo['date'],
                     'todo': todo['todo'],
@@ -93,9 +94,11 @@ def todo_done():
                     'tag': todo['tag'],
                     'comment': todo['comment']
                 }
-                print(doc)
+                # print(doc)
                 db.todo_tags.insert_one(doc)
-                print('new tag updated')
+
+                print('new tag created')
+                print('#{} tags created in db.todo_tags\n {}'.format(todo['num'], todo['tag']))
 
     # percentage 처리 부분
     done_count = 0
@@ -160,7 +163,7 @@ def todo_comment():
 def todo_get():
     todo_list = list(db.todo.find({}, {'_id': False}))
 
-    # 지난 todolist 삭제하기
+    # 지난 todolist 삭제 하기
     today_date = datetime.today().strftime('%m/%d/%Y')
     # print(today_date)
     for todo in todo_list:
