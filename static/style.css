@@ -3,6 +3,7 @@
     background-color: ivory;
     width: 800px;
     height: 600px;
+    margin: auto;
 }
 .today-date{
     display: flex;
