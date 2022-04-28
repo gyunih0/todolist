@@ -257,7 +257,7 @@
       $.ajax({
         type: "POST",
         url: "/todo/delete",
-        data: { num_give: num },
+        data: { num_give: num, date_give: todayDate },
         success: function (response) {
           alert(response["msg"])
            window.location.reload()

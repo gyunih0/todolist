@@ -1,14 +1,13 @@
 '''
-percentage level 중 0값을 설정 해줄 필요가 있나?
->> 생성하고 아무것도 하지 않았다면? (최소 하나를 완료 해야 되는 방식)
->> db.todo_percent 에 값이 저장 되지 않는다.
+2022.04.28
+>> db.todo_percent 의 자료형 변경
+>> todo_done, todo_post, todo_delete 에 대해서 db.todo_percent 업데이트 되도록 수정.
+'''
+
+'''
 
 완료한 상태 (todo_percent & todo_tags 업데이트된 상태) 에서는
-삭제 버튼(function delete_one())눌러도 db.todo에서만 삭제 되므로 나머지 db에는 영향을 주지 않음
--> percent와 tag db의 필드값을 같이 지우는게 좋은 방법인가?
-
-percent_level만 전송하는 방식에서
-done_todo, total 갯수도 전송하는 방식으로 변경
+삭제 버튼(function delete_one())눌렀을 때 해당하는 todo의 todo_tags의 데이터도 삭제 할 것인가?
 
 num 중복 적용 (해결)
 '''
@@ -27,6 +26,29 @@ client = MongoClient(
 db = client.dbsparta
 
 
+def return_percent_level(done, total):
+    percent_level = 0
+    if done == 0 and total == 0:
+        percentage = 0
+    else:
+        percentage = done / total
+
+    if percentage == 0:
+        percent_level = 0
+    elif percentage <= 0.25:
+        percent_level = 1
+    elif percentage <= 0.5:
+        percent_level = 2
+    elif percentage <= 0.75:
+        percent_level = 3
+    elif percentage < 1:
+        percent_level = 4
+    else:
+        percent_level = 5
+
+    return percent_level
+
+
 @app.route('/')
 def home():
 
@@ -40,11 +62,11 @@ def todo_post():
 
     tag_list = list(db.todo_tags.find({}, {'_id': False}))
     todo_list = list(db.todo.find({}, {'_id': False}))
+    percent_list = list(db.todo_percent.find({'date': date_receive}, {'_id': False}))
 
     # 1. db.todo_tags에서 num을 조회
     # 2. db.todo에서 num을 조회
     # 3. 둘 모두 해당하지 않는 num를 새로운 todo의 num로 지정한다.
-
     num_list = []  # num 속성 중복 오류를 막기 위함
     for tag in tag_list:
         num_list.append(tag['num'])
@@ -65,8 +87,28 @@ def todo_post():
         'tag': []  # default
     }
     db.todo.insert_one(doc)
-
     print('<new todolist created>\nDate: {}, todo: {} Num: {} -> db.todo'.format(date_receive, todo_receive, count))
+
+    # todo_percent update
+    if percent_list:
+        done_count = percent_list[0]['done_count']
+        total = percent_list[0]['total']+1
+        percent_level = return_percent_level(done_count, total)
+        db.todo_percent.update_one({'date': date_receive}, {'$set': {'percent_level': percent_level,
+                                                                     'done_count': done_count,
+                                                                     'total': total}})
+        print(total, done_count, percent_level)
+    else:
+
+        doc = {
+            'date': date_receive,
+            'percent_level': 0,
+            'done_count': 0,
+            'total': 1
+        }
+        db.todo_percent.insert_one(doc)
+        print("todo_percent : default")
+
     return jsonify({'msg': '등록 완료'})
 
 
@@ -114,22 +156,9 @@ def todo_done():
     for todo in todo_list:
         if todo['done'] == 1:
             done_count += 1
-    percentage = done_count / total
-    percent_level = 0
-    # if percentage == 0:
-    #     percent_level = 0
-    if percentage <= 0.25:
-        percent_level = 1
-    elif percentage <= 0.5:
-        percent_level = 2
-    elif percentage <= 0.75:
-        percent_level = 3
-    elif percentage < 1:
-        percent_level = 4
-    else:
-        percent_level = 5
+    percent_level = return_percent_level(done_count, total)  # percentage -> percent_level(1~5)
 
-    print(done_count, percentage, 'percent_level = {}'.format(percent_level))
+    print(done_count, total, 'percent_level = {}'.format(percent_level))
 
     done_percentage = list(db.todo_percent.find({'date': date_receive}, {'_id': False}))
 
@@ -147,7 +176,7 @@ def todo_done():
         db.todo_percent.update_one({'date': date_receive}, {'$set': {'percent_level': percent_level,
                                                                      'done_count': done_count,
                                                                      'total': total}})
-
+    print(total, done_count, percent_level)
     return jsonify({'msg': 'done 완료!'})
 
 
@@ -191,9 +220,31 @@ def todo_get():
 @app.route("/todo/delete", methods=["POST"])
 def todo_delete():  # todo_tags 에서 제거 하는건 쉬움 / todo_percent 에서는 고민 필요
     num_receive = request.form['num_give']
-    db.todo.delete_one({'num': int(num_receive)})
+    date_receive = request.form['date_give']
+
     # db.todo_tags.delete_one({'num': int(num_receive)})   # todo_tags에서도 삭제.
-    # percentage는 수정할 필요?
+
+    todo_list = list(db.todo.find({'num': int(num_receive)}, {'_id': False}))
+    percent_list = list(db.todo_percent.find({'date': date_receive}, {'_id': False}))
+
+    # doto_percent update
+
+    total = percent_list[0]['total']-1
+    done_count = percent_list[0]['done_count']
+
+    print(todo_list)
+    if todo_list[0]['done'] == 1:
+        done_count -= 1
+
+    percent_level = return_percent_level(done_count, total)
+    db.todo_percent.update_one({'date': date_receive}, {'$set': {'percent_level': percent_level,
+                                                                 'done_count': done_count,
+                                                                 'total': total}})
+    print(total, done_count, percent_level)
+
+    db.todo.delete_one({'num': int(num_receive)})
+    print('#{} deleted'.format(num_receive))
+
     return jsonify({'msg': '삭제 완료!'})
 
 
